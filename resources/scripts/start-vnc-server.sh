@@ -11,6 +11,11 @@
 
 set -eu
 
+# Set default values for vnc settings if not provided
+VNC_PW=${VNC_PW:-"vncpassword"}
+VNC_RESOLUTION=${VNC_RESOLUTION:-"1600x900"}
+VNC_COL_DEPTH=${VNC_COL_DEPTH:-"24"}
+
 mkdir -p $HOME/.vnc
 touch $HOME/.vnc/passwd
 
@@ -20,7 +25,10 @@ chmod 600 $HOME/.vnc/passwd
 
 # Setting pidfile + command to execute
 pidfile="$HOME/.vnc/*:1.pid"
-command="/usr/bin/vncserver $DISPLAY -geometry $VNC_RESOLUTION -depth $VNC_COL_DEPTH -name Desktop-GUI -autokill"
+config_file=$HOME/.vnc/config
+touch $config_file
+printf "geometry=$VNC_RESOLUTION\ndepth=$VNC_COL_DEPTH\ndesktop=Desktop-GUI" > ~/.vnc/config
+command="/usr/libexec/vncserver $DISPLAY"
 
 # Proxy signals
 function kill_app(){
@@ -32,9 +40,9 @@ function kill_app(){
 }
 trap "kill_app" SIGINT SIGTERM EXIT
 
-#cleanup tmp from previous run 
+#cleanup tmp from previous run
 # run vncserver kill in background
-vncserver -kill $DISPLAY &
+/usr/libexec/vncserver -kill $DISPLAY &
 rm -rfv /tmp/.X*-lock /tmp/.x*-lock /tmp/.X11-unix
 # Delete existing logs
 find $HOME/.vnc/ -name '*.log' -delete
